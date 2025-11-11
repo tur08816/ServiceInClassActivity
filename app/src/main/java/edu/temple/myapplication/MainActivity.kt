@@ -6,11 +6,14 @@ import android.content.ServiceConnection
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.IBinder
+import android.os.Looper
+import android.os.Message
 import android.widget.Button
 import android.widget.TextView
 import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.util.concurrent.Service
 import java.security.Provider
 import java.util.logging.Handler
+import java.util.logging.LogRecord
 import kotlin.concurrent.timer
 
 class MainActivity : AppCompatActivity() {
@@ -20,6 +23,22 @@ class MainActivity : AppCompatActivity() {
     lateinit var TimeBinder: TimerService.TimerBinder
     var isConnected = false
 
+//    val timerHandler = Handler(Looper.getMainLooper()){
+//
+//        true
+//    }
+
+    private val handler = object : android.os.Handler() {
+
+
+        override fun handleMessage(msg: Message) {
+            // Update UI with countdown value
+            findViewById<TextView>(R.id.textView).text = msg.what.toString()
+        }
+
+    }
+
+
     val serviceConnection = object : ServiceConnection{
         override
         fun onServiceConnected(
@@ -27,6 +46,7 @@ class MainActivity : AppCompatActivity() {
             p1: IBinder?
         ) {
             TimeBinder = p1 as TimerService.TimerBinder
+            TimeBinder.setHandler(handler)
             isConnected = true
         }
 
@@ -72,6 +92,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.stopButton).setOnClickListener {
             //change start text to start
             findViewById<Button>(R.id.startButton).text = "start"
+            text.text = "0"
             TimeBinder.stop()
         }
     }
@@ -79,6 +100,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         //unbind
         unbindService(serviceConnection)
+
         super.onDestroy()
     }
 }
