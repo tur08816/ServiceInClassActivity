@@ -32,7 +32,6 @@ class MainActivity : AppCompatActivity() {
 
 
         override fun handleMessage(msg: Message) {
-            // Update UI with countdown value
             findViewById<TextView>(R.id.textView).text = msg.what.toString()
         }
 
