@@ -8,8 +8,11 @@ import android.os.Bundle
 import android.os.IBinder
 import android.os.Looper
 import android.os.Message
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Button
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.util.concurrent.Service
 import java.security.Provider
 import java.util.logging.Handler
@@ -22,6 +25,8 @@ class MainActivity : AppCompatActivity() {
 //create handler and show countdown in activity step 2
     lateinit var TimeBinder: TimerService.TimerBinder
     var isConnected = false
+
+    lateinit var Menu: Menu
 
 //    val timerHandler = Handler(Looper.getMainLooper()){
 //
@@ -54,46 +59,68 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    //menu call back -> menu item determines what button is clicked
+
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        if (menu != null) {
+            Menu = menu
+        }
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        // Handle item selection.
+        return when (item.itemId) {
+            R.id.action_start -> {
+                onTimerStart()
+                true
+            }
+            R.id.action_stop -> {
+                onTimerStop()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+
+    fun onTimerStop(){
+        var item = Menu.findItem(R.id.action_start)
+
+        val text = findViewById<TextView>(R.id.textView)
+        item.icon = ContextCompat.getDrawable(this, R.drawable.timer_24px)
+        text.text = "0"
+        TimeBinder.stop()
+    }
+
+    fun onTimerStart(){
+        var item = Menu.findItem(R.id.action_start)
+        if(!TimeBinder.isRunning && isConnected){
+            item.icon = ContextCompat.getDrawable(this, R.drawable.timer_pause_24px)
+            TimeBinder.start(1000)
+        }else if(TimeBinder.paused && isConnected){
+            item.icon = ContextCompat.getDrawable(this, R.drawable.timer_pause_24px)
+            TimeBinder.pause()
+        }else if(!TimeBinder.paused && isConnected){
+            item.icon = ContextCompat.getDrawable(this, R.drawable.play_arrow_24px)
+            TimeBinder.pause()
+        }
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         val text = findViewById<TextView>(R.id.textView)
 
-
-
         //bind
         var intent = Intent(this, TimerService::class.java)
         bindService(intent,serviceConnection,BIND_AUTO_CREATE)
 
-        //start, pause, and unpause
-        findViewById<Button>(R.id.startButton).setOnClickListener {
-            if(!TimeBinder.isRunning && isConnected){
-                findViewById<Button>(R.id.startButton).text = "pause"
-                TimeBinder.start(1000)
-            }else if(TimeBinder.paused && isConnected){
-                findViewById<Button>(R.id.startButton).text = "pause"
-                TimeBinder.pause()
-            }else if(!TimeBinder.paused && isConnected){
-                findViewById<Button>(R.id.startButton).text = "unpause"
-                TimeBinder.pause()
-            }
-            //if not started then start
-                //change text to pause
-            //else if paused
-                //change text to unpause
-            //else if unpaused
-                //change text to pause
 
-
-        }
-        //stop
-        findViewById<Button>(R.id.stopButton).setOnClickListener {
-            //change start text to start
-            findViewById<Button>(R.id.startButton).text = "start"
-            text.text = "0"
-            TimeBinder.stop()
-        }
     }
 
     override fun onDestroy() {
